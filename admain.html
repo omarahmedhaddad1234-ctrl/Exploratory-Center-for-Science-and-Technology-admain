@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لوحة تحكم المركز الاستكشافي - Cloudinary</title>
+    
+    <!-- ====== أيقونة التاب (Favicon) ====== -->
+    <link rel="icon" href="images/logo.jfif" type="image/jpeg">
+    <link rel="shortcut icon" href="images/logo.jfif" type="image/jpeg">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+    <!-- ====== Firebase SDK (بدون Storage) ====== -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js">
+    </script>
+
+    <style>
+        /* ============================================================
+           جميع الأنماط كما هي (لم تتغير)
+           ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: #f4f7fc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #loginSection {
+            background: white;
+            padding: 2rem 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            transition: 0.3s;
+        }
+        #loginSection .login-logo {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+            border: 4px solid #2a7de1;
+        }
+        #loginSection h1 {
+            font-size: 1.5rem;
+            color: #1a2634;
+            margin-bottom: 0.3rem;
+        }
+        #loginSection p {
+            color: #6b7a8a;
+            margin-bottom: 1.5rem;
+        }
+        #loginSection input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 1rem;
+            border: 2px solid #e0e7ef;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: 0.2s;
+            outline: none;
+        }
+        #loginSection input:focus {
+            border-color: #2a7de1;
+            box-shadow: 0 0 0 3px rgba(42, 125, 225, 0.2);
+        }
+        #loginBtn {
+            width: 100%;
+            padding: 12px;
+            background: #2a7de1;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        #loginBtn:hover {
+            background: #1a5fb4;
+            transform: translateY(-2px);
+        }
+        #loginError {
+            color: #e74c3c;
+            margin-top: 0.8rem;
+            font-size: 0.9rem;
+            height: 1.2rem;
+        }
+        #dashboard {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+            background: #f4f7fc;
+            position: relative;
+        }
+        .dashboard-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            background: #ffffff;
+            box-shadow: -2px 0 15px rgba(0, 0, 0, 0.05);
+            padding: 2rem 1rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #eef2f7;
+            flex-shrink: 0;
+        }
+        .sidebar .brand {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a2634;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid #eef2f7;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sidebar .brand i {
+            color: #2a7de1;
+        }
+        .sidebar nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            flex: 1;
+        }
+        .sidebar nav button {
+            background: transparent;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #4a5a6a;
+            text-align: right;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar nav button i {
+            width: 22px;
+            color: #6b7a8a;
+        }
+        .sidebar nav button:hover {
+            background: #f0f4fa;
+            color: #1a2634;
+        }
+        .sidebar nav button.active {
+            background: #e6eff9;
+            color: #2a7de1;
+            font-weight: 600;
+        }
+        .sidebar nav button.active i {
+            color: #2a7de1;
+        }
+        .sidebar .logout-btn {
+            margin-top: auto;
+            background: #fee9e7;
+            color: #c0392b;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar .logout-btn i {
+            color: #c0392b;
+        }
+        .sidebar .logout-btn:hover {
+            background: #fdd0cc;
+        }
+        .main-content {
+            flex: 1;
+            padding: 2rem 2.5rem;
+            overflow-x: auto;
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            margin-bottom: 2rem;
+        }
+        .dashboard-header h2 {
+            font-size: 1.4rem;
+            color: #1a2634;
+        }
+        .dashboard-header #adminEmail {
+            font-size: 0.9rem;
+            color: #6b7a8a;
+            background: #f0f4fa;
+            padding: 4px 14px;
+            border-radius: 30px;
+        }
+        .stats {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+        .stat-card h3 {
+            font-size: 2.2rem;
+            color: #2a7de1;
+        }
+        .stat-card p {
+            color: #6b7a8a;
+            font-weight: 500;
+        }
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .section-header button {
+            background: #2a7de1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-header button:hover {
+            background: #1a5fb4;
+            transform: scale(1.02);
+        }
+        .table-wrap {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        table th {
+            background: #f8fafd;
+            color: #1a2634;
+            padding: 14px 12px;
+            text-align: right;
+            border-bottom: 2px solid #eef2f7;
+            white-space: nowrap;
+        }
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #eef2f7;
+            vertical-align: middle;
+        }
+        table tr:last-child td {
+            border-bottom: none;
+        }
+        .activity-img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+        .activity-actions button {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin: 0 4px;
+            transition: 0.2s;
+        }
+        .activity-actions .delete-btn {
+            color: #e74c3c;
+        }
+        .activity-actions .delete-btn:hover {
+            color: #c0392b;
+            transform: scale(1.1);
+        }
+        .memories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        .memory-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: 0.2s;
+            position: relative;
+        }
+        .memory-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+        .memory-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+        .memory-card .memory-info {
+            padding: 12px 14px;
+        }
+        .memory-card .memory-info p {
+            font-size: 0.95rem;
+            color: #1a2634;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .memory-card .memory-info .delete-btn {
+            background: #fee9e7;
+            color: #c0392b;
+            border: none;
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .memory-card .memory-info .delete-btn:hover {
+            background: #fdd0cc;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal.open {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem 2.5rem;
+            border-radius: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+            animation: modalIn 0.25s ease;
+        }
+        @keyframes modalIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .modal-content h2,
+        .modal-content h3 {
+            margin-bottom: 1.2rem;
+            color: #1a2634;
+        }
+        .modal-content input,
+        .modal-content select,
+        .modal-content textarea {
+            width: 100%;
+            padding: 10px 14px;
+            margin-bottom: 1rem;
+            border: 2px solid #e0e7ef;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.2s;
+        }
+        .modal-content input:focus,
+        .modal-content select:focus,
+        .modal-content textarea:focus {
+            border-color: #2a7de1;
+            box-shadow: 0 0 0 3px rgba(42, 125, 225, 0.15);
+        }
+        .modal-content textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .modal-content #preview {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 12px;
+            margin: 0.5rem 0 1rem;
+            display: none;
+        }
+        .modal-content .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 0.5rem;
+        }
+        .modal-content .modal-actions button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .modal-content .modal-actions .save-btn {
+            background: #2a7de1;
+            color: white;
+        }
+        .modal-content .modal-actions .save-btn:hover {
+            background: #1a5fb4;
+        }
+        .modal-content .modal-actions .cancel-btn {
+            background: #eef2f7;
+            color: #1a2634;
+        }
+        .modal-content .modal-actions .cancel-btn:hover {
+            background: #dce2ec;
+        }
+        .modal-content .modal-actions .danger-btn {
+            background: #e74c3c;
+            color: white;
+        }
+        .modal-content .modal-actions .danger-btn:hover {
+            background: #c0392b;
+        }
+        @media (max-width: 768px) {
+            .dashboard-wrapper {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 1rem;
+                gap: 0.5rem;
+                border-right: none;
+                border-bottom: 1px solid #eef2f7;
+            }
+            .sidebar .brand {
+                width: 100%;
+                margin-bottom: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+            .sidebar nav {
+                flex-direction: row;
+                flex-wrap: wrap;
+                flex: unset;
+            }
+            .sidebar nav button {
+                padding: 8px 14px;
+                font-size: 0.9rem;
+            }
+            .sidebar .logout-btn {
+                margin-top: 0;
+                margin-right: auto;
+            }
+            .main-content {
+                padding: 1rem;
+            }
+            .stats {
+                flex-direction: column;
+            }
+            .modal-content {
+                padding: 1.5rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .dashboard-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                text-align: center;
+            }
+            .section-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .memories-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    LOGIN (بدون قيم افتراضية)
+    ============================================================ -->
+    <div id="loginSection">
+        <img src="./images/logo.jfif" alt="logo" class="login-logo" />
+        <h1>لوحة تحكم المركز الاستكشافي</h1>
+        <p>سجل الدخول للمتابعة</p>
+        <input type="email" id="email" placeholder="البريد الإلكتروني" />
+        <input type="password" id="password" placeholder="كلمة المرور" />
+        <button id="loginBtn">تسجيل الدخول</button>
+        <p id="loginError"></p>
+    </div>
+
+    <!-- ============================================================
+    DASHBOARD
+    ============================================================ -->
+    <div id="dashboard">
+        <div class="dashboard-wrapper">
+
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="brand">
+                    <i class="fas fa-compass"></i>
+                    المركز الاستكشافي
+                </div>
+                <nav>
+                    <button class="active" data-tab="activities">
+                        <i class="fas fa-calendar-alt"></i> الأنشطة
+                    </button>
+                    <button data-tab="memories">
+                        <i class="fas fa-images"></i> الذكريات
+                    </button>
+                </nav>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                </button>
+            </aside>
+
+            <!-- Main -->
+            <main class="main-content">
+                <header class="dashboard-header">
+                    <div>
+                        <h2>لوحة التحكم</h2>
+                        <span id="adminEmail">loading...</span>
+                    </div>
+                </header>
+
+                <section class="stats">
+                    <div class="stat-card">
+                        <h3 id="activitiesCount">0</h3>
+                        <p>عدد الأنشطة</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="memoriesCount">0</h3>
+                        <p>عدد الذكريات</p>
+                    </div>
+                </section>
+
+                <!-- Activities -->
+                <section id="activitiesSection" class="section active">
+                    <div class="section-header">
+                        <h2>الأنشطة</h2>
+                        <button id="addActivityBtn"><i class="fas fa-plus"></i> إضافة نشاط</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الصورة</th>
+                                    <th>النشاط</th>
+                                    <th>الفرع</th>
+                                    <th>المقدم</th>
+                                    <th>تاريخ الإضافة</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activitiesTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Memories -->
+                <section id="memoriesSection" class="section">
+                    <div class="section-header">
+                        <h2>الذكريات</h2>
+                        <button id="addMemoryBtn"><i class="fas fa-plus"></i> إضافة ذكرى</button>
+                    </div>
+                    <div id="memoriesGrid" class="memories-grid"></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    MODALS
+    ============================================================ -->
+    <!-- Activity Modal (يشمل كل التفاصيل) -->
+    <div id="activityModal" class="modal">
+        <div class="modal-content">
+            <h2 id="activityModalTitle">إضافة نشاط</h2>
+            <input id="activityTitle" placeholder="اسم النشاط" />
+            <input id="activityPresenter" placeholder="اسم المقدم" />
+            <select id="activityBranch">
+                <option value="سموحة">سموحة</option>
+                <option value="الشاطبي">الشاطبي</option>
+                <option value="محرم بك">محرم بك</option>
+                <option value="المنتزه">المنتزه</option>
+            </select>
+            <textarea id="activityDescription" placeholder="وصف النشاط"></textarea>
+            <input id="activityForm" placeholder="لينك Google Forms" />
+            <input type="file" id="activityImage" accept="image/*" />
+            <img id="preview" style="display:none;" alt="معاينة الصورة" />
+            <!-- إضافة حقل الحالة (اختياري) -->
+            <select id="activityStatus">
+                <option value="نشط">نشط</option>
+                <option value="مؤجل">مؤجل</option>
+                <option value="منتهي">منتهي</option>
+            </select>
+            <div class="modal-actions">
+                <button class="save-btn" id="saveActivityBtn">حفظ النشاط</button>
+                <button class="cancel-btn" id="cancelActivityBtn">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Memory Modal -->
+    <div id="memoryModal" class="modal">
+        <div class="modal-content">
+            <h2 id="memoryModalTitle">إضافة ذكرى</h2>
+            <input type="file" id="memoryImage" accept="image/*" />
+            <textarea id="memoryDescription" placeholder="الوصف"></textarea>
+            <div class="modal-actions">
+                <button class="save-btn" id="saveMemoryBtn">حفظ</button>
+                <button class="cancel-btn" id="cancelMemoryBtn">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3>هل تريد الحذف؟</h3>
+            <div class="modal-actions">
+                <button class="danger-btn" id="confirmDeleteBtn">نعم</button>
+                <button class="cancel-btn" id="cancelDeleteBtn">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    JAVASCRIPT - Firebase + Cloudinary
+    ============================================================ -->
+    <script>
+        // ============================================================
+        // 🔥 Firebase Config (البيانات الحقيقية)
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBi1KSAyY4YRaQADbLbkbrF_7C7TVihpss",
+            authDomain: "science-3e360.firebaseapp.com",
+            projectId: "science-3e360",
+            storageBucket: "science-3e360.firebasestorage.app",
+            messagingSenderId: "924099308920",
+            appId: "1:924099308920:web:0e1be01845a8da2a2c2c8d"
+        };
+
+        // ============================================================
+        // INIT FIREBASE (بدون Storage)
+        // ============================================================
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ============================================================
+        // ☁️ دالة رفع الصور إلى Cloudinary
+        // ============================================================
+        async function uploadImage(file) {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", "science_upload"); // تأكد من وجود هذا preset في Cloudinary
+
+            try {
+                const response = await fetch(
+                    "https://api.cloudinary.com/v1_1/doaipcnvd/image/upload", {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                return data.secure_url;
+            } catch (error) {
+                console.error("Cloudinary upload error:", error);
+                throw new Error("فشل رفع الصورة: " + error.message);
+            }
+        }
+
+        // ============================================================
+        // DOM REFS
+        // ============================================================
+        const loginSection = document.getElementById('loginSection');
+        const dashboard = document.getElementById('dashboard');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const adminEmailSpan = document.getElementById('adminEmail');
+
+        // ============================================================
+        // AUTH FUNCTIONS
+        // ============================================================
+        function login() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            if (!email || !password) {
+                loginError.textContent = 'الرجاء إدخال البريد وكلمة المرور';
+                return;
+            }
+            loginError.textContent = 'جاري تسجيل الدخول...';
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    loginError.textContent = '';
+                })
+                .catch((error) => {
+                    loginError.textContent = 'خطأ: ' + error.message;
+                });
+        }
+
+        function logout() {
+            auth.signOut();
+        }
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                loginSection.style.display = 'none';
+                dashboard.style.display = 'block';
+                adminEmailSpan.textContent = user.email;
+                listenToActivities();
+                listenToMemories();
+            } else {
+                loginSection.style.display = 'block';
+                dashboard.style.display = 'none';
+                if (unsubscribeActivities) unsubscribeActivities();
+                if (unsubscribeMemories) unsubscribeMemories();
+            }
+        });
+
+        loginBtn.addEventListener('click', login);
+        logoutBtn.addEventListener('click', logout);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && loginSection.style.display !== 'none') login();
+        });
+
+        // ============================================================
+        // SIDEBAR TABS
+        // ============================================================
+        const tabButtons = document.querySelectorAll('.sidebar nav button');
+        const sections = {
+            activities: document.getElementById('activitiesSection'),
+            memories: document.getElementById('memoriesSection'),
+        };
+
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const tab = btn.dataset.tab;
+                Object.keys(sections).forEach(key => {
+                    sections[key].classList.toggle('active', key === tab);
+                });
+            });
+        });
+
+        // ============================================================
+        // ACTIVITIES - FIRESTORE (بدون Storage)
+        // ============================================================
+        let activities = [];
+        let editingActivityId = null;
+        let unsubscribeActivities = null;
+
+        const activitiesTable = document.getElementById('activitiesTable');
+        const addActivityBtn = document.getElementById('addActivityBtn');
+        const activityModal = document.getElementById('activityModal');
+        const activityModalTitle = document.getElementById('activityModalTitle');
+        const activityTitle = document.getElementById('activityTitle');
+        const activityPresenter = document.getElementById('activityPresenter');
+        const activityBranch = document.getElementById('activityBranch');
+        const activityDescription = document.getElementById('activityDescription');
+        const activityForm = document.getElementById('activityForm');
+        const activityImage = document.getElementById('activityImage');
+        const preview = document.getElementById('preview');
+        const activityStatus = document.getElementById('activityStatus');
+        const saveActivityBtn = document.getElementById('saveActivityBtn');
+        const cancelActivityBtn = document.getElementById('cancelActivityBtn');
+
+        function listenToActivities() {
+            if (unsubscribeActivities) unsubscribeActivities();
+            unsubscribeActivities = db.collection('activities')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot((snapshot) => {
+                    activities = [];
+                    snapshot.forEach(doc => {
+                        activities.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderActivities();
+                    updateStats();
+                }, (error) => {
+                    console.error("Error loading activities: ", error);
+                    activitiesTable.innerHTML =
+                        `<tr><td colspan="7" style="text-align:center;color:red;">خطأ في تحميل البيانات: ${error.message}</td></tr>`;
+                });
+        }
+
+        function renderActivities() {
+            if (!activities.length) {
+                activitiesTable.innerHTML =
+                    `<tr><td colspan="7" style="text-align:center;color:#6b7a8a;padding:2rem;">لا توجد أنشطة</td></tr>`;
+                return;
+            }
+            activitiesTable.innerHTML = activities.map((act) => {
+                const date = act.createdAt ? act.createdAt.toDate ? act.createdAt.toDate() : new Date(act
+                    .createdAt) : new Date();
+                const formattedDate = date.toLocaleDateString('ar-EG', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                const status = act.status || 'نشط';
+                return `
+                <tr>
+                    <td>
+                        <img src="${act.imageUrl || 'https://via.placeholder.com/60?text=No+Image'}" 
+                             alt="${act.title}" class="activity-img" />
+                    </td>
+                    <td><strong>${act.title}</strong></td>
+                    <td>${act.branch}</td>
+                    <td>${act.presenter}</td>
+                    <td>${formattedDate}</td>
+                    <td><span class="status-badge">${status}</span></td>
+                    <td class="activity-actions">
+                        <button class="edit-btn" data-id="${act.id}" title="تعديل">
+                            <i class="fas fa-edit" style="color:#2a7de1;"></i>
+                        </button>
+                        <button class="delete-btn" data-id="${act.id}" title="حذف">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+            `}).join('');
+
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const act = activities.find(a => a.id === btn.dataset.id);
+                    if (act) openActivityModal(act);
+                });
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const act = activities.find(a => a.id === btn.dataset.id);
+                    if (act) openDeleteModal('activity', act);
+                });
+            });
+        }
+
+        function openActivityModal(activity = null) {
+            editingActivityId = activity ? activity.id : null;
+            activityModalTitle.textContent = activity ? 'تعديل نشاط' : 'إضافة نشاط';
+            activityTitle.value = activity ? activity.title : '';
+            activityPresenter.value = activity ? activity.presenter : '';
+            activityBranch.value = activity ? activity.branch : 'سموحة';
+            activityDescription.value = activity ? activity.description : '';
+            activityForm.value = activity ? activity.formLink : '';
+            activityStatus.value = activity ? (activity.status || 'نشط') : 'نشط';
+            preview.style.display = 'none';
+            preview.src = '';
+            if (activity && activity.imageUrl) {
+                preview.src = activity.imageUrl;
+                preview.style.display = 'block';
+            }
+            activityImage.value = '';
+            activityModal.classList.add('open');
+        }
+
+        async function saveActivity() {
+            const title = activityTitle.value.trim();
+            const presenter = activityPresenter.value.trim();
+            const branch = activityBranch.value;
+            const description = activityDescription.value.trim();
+            const formLink = activityForm.value.trim();
+            const status = activityStatus.value;
+
+            if (!title || !presenter) {
+                alert('الرجاء إدخال اسم النشاط واسم المقدم');
+                return;
+            }
+
+            let imageUrl = preview.src && preview.style.display !== 'none' ? preview.src : '';
+            const file = activityImage.files[0];
+
+            if (file) {
+                try {
+                    imageUrl = await uploadImage(file);
+                } catch (error) {
+                    alert(error.message);
+                    return;
+                }
+            }
+
+            const data = { title, presenter, branch, description, formLink, imageUrl, status };
+
+            try {
+                if (editingActivityId) {
+                    await db.collection('activities').doc(editingActivityId).update(data);
+                } else {
+                    await db.collection('activities').add({
+                        ...data,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                closeActivityModal();
+            } catch (error) {
+                alert('خطأ في الحفظ: ' + error.message);
+            }
+        }
+
+        function closeActivityModal() {
+            activityModal.classList.remove('open');
+            editingActivityId = null;
+            activityTitle.value = '';
+            activityPresenter.value = '';
+            activityBranch.value = 'سموحة';
+            activityDescription.value = '';
+            activityForm.value = '';
+            activityImage.value = '';
+            preview.style.display = 'none';
+            preview.src = '';
+            activityStatus.value = 'نشط';
+        }
+
+        activityImage.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    preview.src = ev.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+
+        addActivityBtn.addEventListener('click', () => openActivityModal());
+        saveActivityBtn.addEventListener('click', saveActivity);
+        cancelActivityBtn.addEventListener('click', closeActivityModal);
+
+        // ============================================================
+        // MEMORIES - FIRESTORE (بدون Storage)
+        // ============================================================
+        let memories = [];
+        let editingMemoryId = null;
+        let unsubscribeMemories = null;
+
+        const memoriesGrid = document.getElementById('memoriesGrid');
+        const addMemoryBtn = document.getElementById('addMemoryBtn');
+        const memoryModal = document.getElementById('memoryModal');
+        const memoryModalTitle = document.getElementById('memoryModalTitle');
+        const memoryImage = document.getElementById('memoryImage');
+        const memoryDescription = document.getElementById('memoryDescription');
+        const saveMemoryBtn = document.getElementById('saveMemoryBtn');
+        const cancelMemoryBtn = document.getElementById('cancelMemoryBtn');
+
+        function listenToMemories() {
+            if (unsubscribeMemories) unsubscribeMemories();
+            unsubscribeMemories = db.collection('memories')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot((snapshot) => {
+                    memories = [];
+                    snapshot.forEach(doc => {
+                        memories.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderMemories();
+                    updateStats();
+                }, (error) => {
+                    console.error("Error loading memories: ", error);
+                    memoriesGrid.innerHTML =
+                        `<p style="color:red;grid-column:1/-1;text-align:center;">خطأ في تحميل البيانات: ${error.message}</p>`;
+                });
+        }
+
+        function renderMemories() {
+            if (!memories.length) {
+                memoriesGrid.innerHTML =
+                    `<p style="color:#6b7a8a;grid-column:1/-1;text-align:center;padding:2rem;">لا توجد ذكريات</p>`;
+                return;
+            }
+            memoriesGrid.innerHTML = memories.map((mem) => `
+                <div class="memory-card">
+                    <img src="${mem.imageUrl || 'https://via.placeholder.com/300?text=No+Image'}" alt="ذكرى" />
+                    <div class="memory-info">
+                        <p>${mem.description || ''}</p>
+                        <button class="delete-btn" data-id="${mem.id}">🗑️ حذف</button>
+                    </div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.memory-card .delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mem = memories.find(m => m.id === btn.dataset.id);
+                    if (mem) openDeleteModal('memory', mem);
+                });
+            });
+        }
+
+        function openMemoryModal(memory = null) {
+            editingMemoryId = memory ? memory.id : null;
+            memoryModalTitle.textContent = memory ? 'تعديل ذكرى' : 'إضافة ذكرى';
+            memoryDescription.value = memory ? memory.description : '';
+            memoryImage.value = '';
+            memoryModal.classList.add('open');
+        }
+
+        async function saveMemory() {
+            const description = memoryDescription.value.trim();
+            const file = memoryImage.files[0];
+
+            if (!description && !file) {
+                alert('الرجاء إدخال وصف أو رفع صورة');
+                return;
+            }
+
+            let imageUrl = '';
+
+            if (file) {
+                try {
+                    imageUrl = await uploadImage(file);
+                } catch (error) {
+                    alert(error.message);
+                    return;
+                }
+            } else {
+                // في حالة التعديل بدون تغيير الصورة
+                if (editingMemoryId) {
+                    const old = memories.find(m => m.id === editingMemoryId);
+                    if (old) imageUrl = old.imageUrl || '';
+                }
+            }
+
+            const data = { description, imageUrl };
+
+            try {
+                if (editingMemoryId) {
+                    await db.collection('memories').doc(editingMemoryId).update(data);
+                } else {
+                    await db.collection('memories').add({
+                        ...data,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                closeMemoryModal();
+            } catch (error) {
+                alert('خطأ في الحفظ: ' + error.message);
+            }
+        }
+
+        function closeMemoryModal() {
+            memoryModal.classList.remove('open');
+            editingMemoryId = null;
+            memoryDescription.value = '';
+            memoryImage.value = '';
+        }
+
+        addMemoryBtn.addEventListener('click', () => openMemoryModal());
+        saveMemoryBtn.addEventListener('click', saveMemory);
+        cancelMemoryBtn.addEventListener('click', closeMemoryModal);
+
+        // ============================================================
+        // DELETE MODAL
+        // ============================================================
+        let deleteTarget = null;
+        const deleteModal = document.getElementById('deleteModal');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+        function openDeleteModal(type, data) {
+            deleteTarget = { type, data };
+            deleteModal.classList.add('open');
+        }
+
+        async function confirmDelete() {
+            if (!deleteTarget) return;
+            const { type, data } = deleteTarget;
+            try {
+                if (type === 'activity') {
+                    await db.collection('activities').doc(data.id).delete();
+                } else if (type === 'memory') {
+                    await db.collection('memories').doc(data.id).delete();
+                }
+                closeDeleteModal();
+            } catch (error) {
+                alert('خطأ في الحذف: ' + error.message);
+            }
+        }
+
+        function closeDeleteModal() {
+            deleteModal.classList.remove('open');
+            deleteTarget = null;
+        }
+
+        confirmDeleteBtn.addEventListener('click', confirmDelete);
+        cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+
+        // ============================================================
+        // UPDATE STATS
+        // ============================================================
+        function updateStats() {
+            document.getElementById('activitiesCount').textContent = activities.length;
+            document.getElementById('memoriesCount').textContent = memories.length;
+        }
+
+        // ============================================================
+        // CLOSE MODALS ON OVERLAY
+        // ============================================================
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('open');
+                }
+            });
+        });
+
+        console.log('✅ Admin Panel with Firebase + Cloudinary ready!');
+    </script>
+
+</body>
+</html>
